@@ -18,13 +18,13 @@ curl -sSL https://install.python-poetry.org/ | python3 - --uninstall
 poetry install
 ```
 
-Add a new package:
+- Add a new package:
 
 ```
 poetry add <packageName>
 ```
 
-Run script:
+- Run script:
 
 ```
 poetry run python exs/$(ex)/app/main.py
