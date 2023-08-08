@@ -155,4 +155,5 @@ data/seed_data.sql*
 # VS Code
 .vscode/
 
-**/**/**/out/
+**/**/**/out/*
+!**/**/**/out/.gitkeep

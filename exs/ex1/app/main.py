@@ -24,11 +24,22 @@ def get_min_max_random(df: pd.DataFrame, row: pd.Series, column: str, index: int
 if __name__ == "__main__":
     df = pd.read_excel(f"{settings.Config.data_dir}/data.xlsx")
     df.columns = ["saturated_fats", "alcohol", "calories", "sex"]
+
+    print(df)
+
     data_service = DataService(df)
+
     data_service.replace_invalid_values(["alcohol", "saturated_fats"], [get_prev_next_random, get_min_max_random])
 
     plot_service = PlotService(df)
+
+    plot_service.sex_bar_plot()
+
     plot_service.boxplot()
+    plot_service.boxplot(["saturated_fats"], True, "saturated_fats_boxplot.png")
+    plot_service.boxplot(["alcohol"], True, "alcohol_boxplot.png")
+    plot_service.boxplot(["calories"], True, "calories_boxplot.png")
+
     plot_service.male_female_boxplot(["saturated_fats", "alcohol", "calories"], True)
+
     plot_service.calories_category_boxplot(["alcohol"], True)
-    print(df)
