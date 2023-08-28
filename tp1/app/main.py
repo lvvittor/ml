@@ -78,22 +78,21 @@ def exercise_2():
                 word_occurrences[row["category"]][word] = 0
             word_occurrences[row["category"]][word] += 1
 
-    print(word_occurrences)
-
     # Predict value
     actual_values = []
     predicted_values = []
 
     k = len(categories)
-    for _, row in test_data.iterrows():
+    for i_, row in test_data.iterrows():
         actual_values.append(row['category'])
         probabilities = []
+        title = list(set(row['title'].split(" ")))
         for category in categories:
             p = amount_news[category]/train_data.shape[0]
-            title = list(set(row['title'].split(" ")))
             for word in title:
-                if word in word_occurrences[row["category"]]:
-                    amount_word = word_occurrences[row["category"]][word]
+                word = word.lower()
+                if word in word_occurrences[category]:
+                    amount_word = word_occurrences[category][word]
                 else:
                     amount_word = 0
 
@@ -103,20 +102,12 @@ def exercise_2():
         predicted_values.append(categories[np.argmax(probabilities)])
 
 
-    print(actual_values[:10])
-    print(predicted_values[:10])
     count = 0
     for a, b in zip(actual_values, predicted_values):
         if a == b:
             count += 1
 
-    count2 = 0
-    for a in predicted_values:
-        if a == 'Economia':
-            count2 += 1
-
     print("Precision:", count/len(actual_values))
-    print("Count2", count2/len(predicted_values))
 
 
     # # Convert X_test and Y_test to NumPy arrays
