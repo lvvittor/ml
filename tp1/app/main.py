@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from settings import settings
 from naive_bayes import NaiveBayes
+from services import PlotService
 
 def exercise_1():
     df = pd.read_excel(f"{settings.Config.data_dir}/PreferenciasBritanicos.xlsx")
@@ -102,32 +103,74 @@ def exercise_2():
         predicted_values.append(categories[np.argmax(probabilities)])
 
 
-    count = 0
-    for a, b in zip(actual_values, predicted_values):
-        if a == b:
-            count += 1
+    confusion_matrix = np.zeros((k, k), dtype=int)
 
-    print("Precision:", count/len(actual_values))
+    for actual, predicted in zip(actual_values, predicted_values):
+        actual_idx = np.where(categories == actual)[0][0]
+        predicted_idx = np.where(categories == predicted)[0][0]
+        confusion_matrix[actual_idx][predicted_idx] += 1
+
+    print(confusion_matrix)
+
+    plot_service = PlotService(df)
+
+    plot_service.confusion_matrix(confusion_matrix, categories)
+
+    evaluation_measures = {}
+    for category in categories:
+        evaluation_measures[category] = {
+            "TP": 0,
+            "TN": 0,
+            "FP": 0,
+            "FN": 0,
+            "Accuracy": 0,
+            "Precision": 0,
+            "Tasa_FP": 0,
+            "Recall": 0,
+            "F1": 0
+        }
+    
+    # Calculate TP, TN, FP and FN
+    for i in range(k):
+        for j in range(k):
+            category_actual = categories[i]
+            category_predicted = categories[j]
+            
+            cell_value = confusion_matrix[i][j]
+            
+            if category_actual == category_predicted:
+                evaluation_measures[category_actual]["TP"] += cell_value
+                for category_other in categories:
+                    if category_other != category_actual:
+                        evaluation_measures[category_other]["TN"] += cell_value
+            else:
+                evaluation_measures[category_actual]["FN"] += cell_value
+                evaluation_measures[category_predicted]["FP"] += cell_value
 
 
-    # # Convert X_test and Y_test to NumPy arrays
-    # X_test = test_data.drop('category', axis=1).values
-    # Y_test = test_data['category'].values
+    for category, measures in evaluation_measures.items():
+        TP = measures["TP"]
+        TN = measures["TN"]
+        FP = measures["FP"]
+        FN = measures["FN"]
+        measures["Accuracy"] = (TP + TN)/(TP+TN+FP+FN)
+        measures["Precision"] = (TP)/(TP+FP)
+        measures["Tasa_FP"] = (FP)/(TN+FP)
+        measures["Recall"] = (TP)/(TP+FN)
+        measures["F1"] = 2*measures["Precision"]*measures["Recall"]/(measures["Precision"]+measures["Recall"])
+        print(f"Categoría: {category}")
+        print(f"TP: {measures['TP']:d}")
+        print(f"TN: {measures['TN']:d}")
+        print(f"FP: {measures['FP']:d}")
+        print(f"FN: {measures['FN']:d}")
+        print(f"Accuracy: {measures['Accuracy']:.3f}")
+        print(f"Precision: {measures['Precision']:.3f}")
+        print(f"Tasa_FP: {measures['Tasa_FP']:.3f}")
+        print(f"Recall: {measures['Recall']:.3f}")
+        print(f"F1: {measures['F1']:.3f}")
+        print()
 
-    # # Initialize variables for confusion matrix
-    # num_classes = df['category'].unique().size
-    # confusion = np.zeros((num_classes, num_classes), dtype=int)
 
-    # print("Building confusion matrix...")
-    # # Predict class labels for each test data point and update the confusion matrix
-    # for x, true_label in zip(X_test, Y_test):
-    #     likelihoods = naiveBayesClassifier.predict(x)
-    #     predicted_class = np.argmax(likelihoods)
-    #     confusion[true_label, predicted_class] += 1
-
-    # # Print the confusion matrix
-    # print("Confusion Matrix:")
-    # print(confusion)
 
 
 def exercise_3():
