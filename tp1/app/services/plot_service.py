@@ -27,8 +27,37 @@ class PlotService:
         plt.xlabel("Predicted")
         plt.ylabel("Real")
         plt.tight_layout()
+        plt.savefig(f"{settings.Config.out_dir}/{filename}")
         plt.show()
+        plt.close()
+
+
+    def roc_curve(self, categories, TVPs, TFPs, filename = "roc_curve.png"):
+        """Given a list of categories, true positive rates and false positive rates, plot the ROC curve.
+
+        Args:
+            categories (list): Categories used in the ROC curve.
+            TVPs (list): True positive rates.
+            TFPs (list): False positive rates.
+            filename (str): Name of the file to save the ROC curve.
+        """
+        plt.figure(figsize=(8, 6))
+
+        for category in categories:
+            print("Category:", category)
+            print("TVP:", TVPs[category])
+            print("TFP:", TFPs[category])
+            plt.plot(TFPs[category], TVPs[category], label=f"{category}")
+
+        plt.plot([0, 1], [0, 1], color='black', linestyle='--')
+
+        plt.xlabel("False Positive Rate")
+        plt.ylabel("True Positive Rate")
+
+        plt.legend()
+        plt.tight_layout()
 
         plt.savefig(f"{settings.Config.out_dir}/{filename}")
+        plt.show()
         plt.close()
     

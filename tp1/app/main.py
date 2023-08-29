@@ -81,6 +81,7 @@ def exercise_2():
 
     # Predict value
     actual_values = []
+    actual_values_probabilities = []
     predicted_values = []
 
     k = len(categories)
@@ -101,7 +102,10 @@ def exercise_2():
             
             probabilities.append(p)
         predicted_values.append(categories[np.argmax(probabilities)])
-
+        # Turn the probabilities into a probability distribution
+        probabilities = np.array(probabilities) / np.sum(probabilities)
+        # Save the probability of the correct category
+        actual_values_probabilities.append(probabilities[np.where(categories == row['category'])[0][0]])
 
     confusion_matrix = np.zeros((k, k), dtype=int)
 
@@ -169,8 +173,83 @@ def exercise_2():
         print(f"Recall: {measures['Recall']:.3f}")
         print(f"F1: {measures['F1']:.3f}")
         print()
+    
+    # Plot ROC curve
+    TVPs = {}
+    TFPs = {}
 
+    for category in categories:
+        TVPs[category] = []
+        TFPs[category] = []
 
+    for threshold in range(1, 11):
+        threshold /= 10
+
+        predictions = np.empty(len(actual_values), dtype=object)
+        
+        for i in range(len(actual_values)):
+            # Si la prediccion sobre la categoria correcta tiene una probabilidad mayor o 
+            # igual al threshold, entonces la prediccion es la categoria correcta.
+            if actual_values_probabilities[i] >= threshold:
+                predictions[i] = actual_values[i]
+            # Si no, la prediccion es la categoria con mayor probabilidad.
+            else:
+                predictions[i] = predicted_values[i]
+
+        for category in categories:
+            confusion_matrix = np.zeros((2, 2), dtype=int)
+            
+            # category: "salud"
+            # actual: "salud"
+            # predicted: "salud"
+            # actual_idx: 0, predicted_idx: 0
+
+            # category: "salud"
+            # actual: "salud"
+            # predicted: "deportes"
+            # actual_idx: 0, predicted_idx: 1
+
+            # category: "salud"
+            # actual: "deportes"
+            # predicted: "deportes"
+            # actual_idx: 1, predicted_idx: 0
+
+            # category: "salud"
+            # actual: "deportes"
+            # predicted: "comida"
+            # actual_idx: 1, predicted_idx: 1
+
+            # Generamos la matriz de confusion para la categoria y threshol actuales
+            for actual, predicted in zip(actual_values, predictions):
+                if actual == category:
+                    actual_idx = 0
+                else:
+                    actual_idx = 1
+                
+                if predicted == category:
+                    predicted_idx = 0
+                else:
+                    predicted_idx = 1
+                
+                confusion_matrix[actual_idx][predicted_idx] += 1
+
+            print("CATEGORY:", category)
+            print("THRESHOLD:", threshold)
+            print(confusion_matrix)
+            print()
+            
+            TP = confusion_matrix[0][0]
+            TN = confusion_matrix[1][1]
+            FP = confusion_matrix[1][0]
+            FN = confusion_matrix[0][1]
+
+            TVP = TP/(TP+FN)
+            TFP = FP/(FP+TN)
+
+            TVPs[category].append(TVP)
+            TFPs[category].append(TFP)
+        
+    plot_service.roc_curve(categories, TVPs, TFPs)
 
 
 def exercise_3():
