@@ -72,7 +72,7 @@ def exercise_2():
     # Calculate occurrencies of a word in a title for each category
     for _, row in train_data.iterrows():
         amount_news[row['category']] += 1
-        title = list(set(row['title'].split(" ")))
+        title = row['title'].split(" ")
         for word in title:
             word = word.lower()
             if word not in word_occurrences[row["category"]]:
@@ -84,13 +84,14 @@ def exercise_2():
     actual_values_probabilities = []
     predicted_values = []
 
-    k = len(categories)
+    categories_len = len(categories)
     for i_, row in test_data.iterrows():
         actual_values.append(row['category'])
         probabilities = []
-        title = list(set(row['title'].split(" ")))
+        title = row['title'].split(" ")
         for category in categories:
             p = amount_news[category]/train_data.shape[0]
+            k = len(word_occurrences[category].keys())
             for word in title:
                 word = word.lower()
                 if word in word_occurrences[category]:
@@ -98,7 +99,7 @@ def exercise_2():
                 else:
                     amount_word = 0
 
-                p *= (amount_word + 1)/(amount_news[category] + k)
+                p *= (amount_word + 1)/(np.array(list(word_occurrences[category].values())).sum() + k)
             
             probabilities.append(p)
         predicted_values.append(categories[np.argmax(probabilities)])
@@ -107,7 +108,7 @@ def exercise_2():
         # Save the probability of the correct category
         actual_values_probabilities.append(probabilities[np.where(categories == row['category'])[0][0]])
 
-    confusion_matrix = np.zeros((k, k), dtype=int)
+    confusion_matrix = np.zeros((categories_len, categories_len), dtype=int)
 
     for actual, predicted in zip(actual_values, predicted_values):
         actual_idx = np.where(categories == actual)[0][0]
@@ -135,8 +136,8 @@ def exercise_2():
         }
     
     # Calculate TP, TN, FP and FN
-    for i in range(k):
-        for j in range(k):
+    for i in range(categories_len):
+        for j in range(categories_len):
             category_actual = categories[i]
             category_predicted = categories[j]
             
