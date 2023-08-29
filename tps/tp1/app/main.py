@@ -3,6 +3,7 @@ import numpy as np
 from settings import settings
 from naive_bayes import NaiveBayes
 from services import PlotService
+from services import AdmissionsPredictor
 
 def exercise_1():
     df = pd.read_excel(f"{settings.Config.data_dir}/PreferenciasBritanicos.xlsx")
@@ -224,7 +225,25 @@ def exercise_2():
 
 
 def exercise_3():
-    pass
+    df = pd.read_csv(f"{settings.Config.data_dir}/binary.csv")
+    admissions_predictor = AdmissionsPredictor(df)
+
+    aux = 0
+    for gpa in [True, False]:
+	    for gre in [True, False]:
+		    aux += admissions_predictor.classify(gre, gpa, 0, 1)
+		    
+    total = admissions_predictor.get_filtered_probability(k=4, rank=1)
+    print(f'P(admit = 1 | rank = 1) = {aux / total}')
+
+    aux = admissions_predictor.get_filtered_probability(gpa_class=True, gre_class=False, admit=1, rank=2)
+    total = aux + admissions_predictor.get_filtered_probability(gpa_class=True, gre_class=False, admit=0, rank=2)
+    print(f'P(admit = 1 | rank = 2, gpa = 450, gre = 3.5) = P(admit = 1 | rank = 2, gpa_class = 0, gre_class = 1) = {aux / total}')
+
+
+		    
+    
+		    
 
 
 if __name__ == "__main__":
