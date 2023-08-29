@@ -44,9 +44,6 @@ class PlotService:
         plt.figure(figsize=(8, 6))
 
         for category in categories:
-            print("Category:", category)
-            print("TVP:", TVPs[category])
-            print("TFP:", TFPs[category])
             plt.plot(TFPs[category], TVPs[category], label=f"{category}")
 
         plt.plot([0, 1], [0, 1], color='black', linestyle='--')
