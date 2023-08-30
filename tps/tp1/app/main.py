@@ -244,7 +244,15 @@ def exercise_3():
     for idx, row in admit_table.iterrows():
         total = row[1] + row[0]
         row[0] = (row[0] + 1)/(total + 2)
-        row[1] = (row[1] + 1)/(total + 2)    
+        row[1] = (row[1] + 1)/(total + 2)   
+
+    total_cases = len(admit_table)
+    prob_admit_1 = admit_table[1].sum() / total_cases
+    prob_admit_0 = 1 - prob_admit_1
+
+    print("P(admit=1):", prob_admit_1)
+    print("P(admit=0):", prob_admit_0)
+    
     admit_rank_1 = admit_table[admit_table.index.get_level_values('rank') == 1]
     admit_no_rank_1_proba = admit_rank_1[0].sum()
     admit_yes_rank_1_proba = admit_rank_1[1].sum()
