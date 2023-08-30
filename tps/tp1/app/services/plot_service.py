@@ -37,16 +37,16 @@ class PlotService:
 
         Args:
             categories (list): Categories used in the ROC curve.
-            TVPs (list): True positive rates.
-            TFPs (list): False positive rates.
+            TVPs (dict(list)): True positive rates.
+            TFPs (dict(list)): False positive rates.
             filename (str): Name of the file to save the ROC curve.
         """
         plt.figure(figsize=(8, 6))
 
         for category in categories:
-            plt.plot(TFPs[category], TVPs[category], label=f"{category}")
+            plt.plot(TFPs[category], TVPs[category], label=f"{category}", marker='o', markersize=3, alpha=0.7)
 
-        plt.plot([0, 1], [0, 1], color='black', linestyle='--')
+        plt.plot([0, 1], [0, 1], color='black', linestyle='--', label="Random Classifier")
 
         plt.xlabel("False Positive Rate")
         plt.ylabel("True Positive Rate")

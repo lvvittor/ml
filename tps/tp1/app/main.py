@@ -61,9 +61,6 @@ def exercise_2():
     print(train_data.head())
     print(test_data.head())
 
-    X = train_data.drop('category', axis=1)
-    Y = train_data['category']
-
     word_occurrences = {}
     amount_news = {}
     for category in categories:
@@ -84,6 +81,7 @@ def exercise_2():
     actual_values = []
     actual_values_probabilities = []
     predicted_values = []
+    predicted_probabilities = []
 
     categories_len = len(categories)
     for i_, row in test_data.iterrows():
@@ -106,6 +104,7 @@ def exercise_2():
         predicted_values.append(categories[np.argmax(probabilities)])
         # Turn the probabilities into a probability distribution
         probabilities = np.array(probabilities) / np.sum(probabilities)
+        predicted_probabilities.append(probabilities)
         # Save the probability of the correct category
         actual_values_probabilities.append(probabilities[np.where(categories == row['category'])[0][0]])
 
@@ -184,15 +183,16 @@ def exercise_2():
         TVPs[category] = []
         TFPs[category] = []
 
-    for threshold in np.arange(0.97, 1.00005, 0.00005):
+    step = 0.1
 
-        predictions = np.empty(len(actual_values), dtype=object)
-        
-        for i in range(len(actual_values)):
-            predictions[i] = actual_values_probabilities[i] >= threshold
-            
+    for threshold in np.arange(0, 1 + step, step):
 
-        for category in categories:
+        for index, category in enumerate(categories):
+            predictions = np.empty(len(actual_values), dtype=object)
+
+            for i in range(len(actual_values)):
+                predictions[i] = predicted_probabilities[i][index] >= threshold            
+
             confusion_matrix = np.zeros((2, 2), dtype=int)
 
             # Generamos la matriz de confusion para la categoria y threshol actuales
@@ -230,9 +230,9 @@ def exercise_3():
 
     aux = 0
     for gpa in [True, False]:
-	    for gre in [True, False]:
-		    aux += admissions_predictor.classify(gre, gpa, 0, 1)
-		    
+        for gre in [True, False]:
+            aux += admissions_predictor.classify(gre, gpa, 0, 1)
+            
     total = admissions_predictor.get_filtered_probability(k=4, rank=1)
     print(f'P(admit = 1 | rank = 1) = {aux / total}')
 

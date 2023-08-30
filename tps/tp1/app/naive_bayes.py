@@ -9,6 +9,7 @@ class NaiveBayes:
         self.p_Y = self.Y.value_counts() / len(self.Y)
 
         # Create a dictionary to hold conditional probabilities
+        # e.g. P(scons = 1 | nationality = I) = self.prob_conditional["scons"][(1, "I")]
         self.prob_conditional = {}
 
 
