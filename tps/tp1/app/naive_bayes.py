@@ -1,42 +1,39 @@
 import numpy as np
 
 class NaiveBayes:
-    def __init__(self, df):
-        self.attributes = df.drop('nationality', axis=1)
-        self.nationalities = df['nationality']
+    def __init__(self, X, Y):
+        self.X = X
+        self.Y = Y
 
         # Calculate probabilities of being from a nationality
-        self.p_nationality = self.nationalities.value_counts() / len(self.nationalities)
+        self.p_Y = self.Y.value_counts() / len(self.Y)
 
-        # Calculate all conditional probabilities, prob_conditional is a dictionary where each key is a column from the dataframe
-        # and its value is another dictionary where each pair [key,value] is [(possible_value, nationality), P(possible_value | nationality)]
-        # with this dataset possible_value is 0 or 1 and nationality I or E
-        # e.x prob_conditional["scons"][(1,"I")] returns the probability of "scons" being 1 if the nationality is "I"
+        # Create a dictionary to hold conditional probabilities
         self.prob_conditional = {}
 
 
     def train(self):
-        for attribute in self.attributes.columns:
-            self.prob_conditional[attribute] = {}
+        for x in self.X.columns:
+            self.prob_conditional[x] = {}
 
-            for value in self.attributes[attribute].unique():
-                for nationality in self.nationalities.unique():
-                    k = len(self.nationalities.unique())
-                    # Apply Laplace smoothing
-                    prob = (((self.attributes[attribute] == value) & (self.nationalities == nationality)).sum() + 1) / ((self.nationalities == nationality).sum() + k)
-                    self.prob_conditional[attribute][(value, nationality)] = prob
+            for value in self.X[x].unique():
+                for y in self.Y.unique():
+                    k = len(self.Y.unique())
+                    x_mask = (self.X[x] == value)
+                    y_mask = (self.Y == y)
+                    prob = (np.sum(x_mask & y_mask) + 1) / (np.sum(y_mask) + k)
+                    self.prob_conditional[x][(value, y)] = prob
+                    
 
-
-    def predict(self, x):
+    def predict(self, x_test):
         likelihoods = []
 
-        for nationality in self.nationalities.unique():
-            likelihood = self.p_nationality[nationality]
+        for y in self.Y.unique():
+            likelihood = self.p_Y[y]
 
-            for i, attribute_value in enumerate(x):
-                likelihood *= self.prob_conditional[self.attributes.columns[i]][(attribute_value, nationality)]
+            for i, x in enumerate(x_test):
+                likelihood *= self.prob_conditional[self.X.columns[i]][(x, y)]
 
             likelihoods.append(likelihood)
 
-        # Turn into propbabilities
-        return likelihoods / np.sum(likelihoods)
+        return np.array(likelihoods) / np.sum(likelihoods)
