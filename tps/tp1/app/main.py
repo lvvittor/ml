@@ -228,7 +228,7 @@ def exercise_3():
     df = pd.read_csv(f"{settings.Config.data_dir}/binary.csv")
     df['gre_d'] = pd.cut(df['gre'], bins=[-float('inf'), 500, float('inf')], labels=['gre < 500', 'gre ≥ 500'])
     df['gpa_d'] = pd.cut(df['gpa'], bins=[-float('inf'), 3, float('inf')], labels=['gpa < 3', 'gpa ≥ 3'])
-    print(df)
+
     dag = {
 	    'admit': ['rank', 'gre_d', 'gpa_d'],
 	    'gre_d': ['rank'],
@@ -239,8 +239,13 @@ def exercise_3():
     bn = BayesianNetwork(df, dag)
 
     # P(admit = 0 | rank = 1)
-    admit_table = bn.network_tables['admit']
-    admit_rank_1 = admit_table[admit_table['rank'] == 1]
+    
+    admit_table = df.groupby(['gre_d', 'gpa_d', 'rank'])['admit'].value_counts().unstack().fillna(0)
+    for idx, row in admit_table.iterrows():
+        total = row[1] + row[0]
+        row[0] = (row[0] + 1)/(total + 2)
+        row[1] = (row[1] + 1)/(total + 2)    
+    admit_rank_1 = admit_table[admit_table.index.get_level_values('rank') == 1]
     admit_no_rank_1_proba = admit_rank_1[0].sum()
     admit_yes_rank_1_proba = admit_rank_1[1].sum()
     proba_admit_0_rank_1 =  admit_no_rank_1_proba / (admit_no_rank_1_proba + admit_yes_rank_1_proba)
@@ -248,7 +253,10 @@ def exercise_3():
 
     for node, table in bn.network_tables.items():
         print(f"Condition Probability Table for {node}: ")
-        print(table)
+        if node != 'admit':
+            print(table)
+        else:
+            print(admit_table)
 
 
 if __name__ == "__main__":
