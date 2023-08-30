@@ -1,4 +1,4 @@
-from services.admissions_predictor import AdmissionsPredictor
+from services.bayesian_network import BayesianNetwork
 from services.laplace_smoothing import LaplaceSmoothing
 
-__all__ = [AdmissionsPredictor, LaplaceSmoothing]
+__all__ = [BayesianNetwork, LaplaceSmoothing]

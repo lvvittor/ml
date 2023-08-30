@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from settings import settings
 from naive_bayes import NaiveBayes
-from services import AdmissionsPredictor
+from services import BayesianNetwork
 
 
 
@@ -36,24 +36,29 @@ def exercise_2():
 
 def exercise_3():
     df = pd.read_csv(f"{settings.Config.data_dir}/binary.csv")
-    admissions_predictor = AdmissionsPredictor(df)
+    df['gre_d'] = pd.cut(df['gre'], bins=[-float('inf'), 500, float('inf')], labels=['gre < 500', 'gre ≥ 500'])
+    df['gpa_d'] = pd.cut(df['gpa'], bins=[-float('inf'), 3, float('inf')], labels=['gpa < 3', 'gpa ≥ 3'])
+    print(df)
+    dag = {
+	    'admit': ['rank', 'gre_d', 'gpa_d'],
+	    'gre_d': ['rank'],
+	    'gpa_d': ['rank'],
+	    'rank': []
+    }
 
-    aux = 0
-    for gpa in [True, False]:
-	    for gre in [True, False]:
-		    aux += admissions_predictor.classify(gre, gpa, 0, 1)
-		    
-    total = admissions_predictor.get_filtered_probability(k=4, rank=1)
-    print(f'P(admit = 1 | rank = 1) = {aux / total}')
+    bn = BayesianNetwork(df, dag)
 
-    aux = admissions_predictor.get_filtered_probability(gpa_class=True, gre_class=False, admit=1, rank=2)
-    total = aux + admissions_predictor.get_filtered_probability(gpa_class=True, gre_class=False, admit=0, rank=2)
-    print(f'P(admit = 1 | rank = 2, gpa = 450, gre = 3.5) = P(admit = 1 | rank = 2, gpa_class = 0, gre_class = 1) = {aux / total}')
+    # P(admit = 0 | rank = 1)
+    admit_table = bn.network_tables['admit']
+    admit_rank_1 = admit_table[admit_table['rank'] == 1]
+    admit_no_rank_1_proba = admit_rank_1[0].sum()
+    admit_yes_rank_1_proba = admit_rank_1[1].sum()
+    proba_admit_0_rank_1 =  admit_no_rank_1_proba / (admit_no_rank_1_proba + admit_yes_rank_1_proba)
+    print(proba_admit_0_rank_1)
 
-
-		    
-    
-		    
+    # for node, table in bn.network_tables.items():
+    #     print(f"Condition Probability Table for {node}: ")
+    #     print(table)
 
 
 if __name__ == "__main__":
