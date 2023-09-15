@@ -1,4 +1,5 @@
 {
     "exercise": 2,
-    "verbose": false
+    "verbose": false,
+    "knn_weighted": true
 }

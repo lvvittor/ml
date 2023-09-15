@@ -29,6 +29,7 @@ class Settings(BaseSettings):
 
     exercise: int = 1
     verbose: bool = False
+    knn_weighted: bool = False
 
     class Config:
         env_file_encoding = 'utf-8'
