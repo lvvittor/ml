@@ -4,7 +4,8 @@ from sklearn.preprocessing import StandardScaler
 
 from settings import settings
 from knn import KNN
-from visualization import plot_confusion_matrix
+from visualization import plot_confusion_matrix, plot_values_vs_variable
+from metrics import calc_evaluation_measures
 
 def main():
 	match settings.exercise:
@@ -23,11 +24,12 @@ def exercise_1():
 def exercise_2():
     df = pd.read_csv(f"{settings.Config.data_dir}/reviews_sentiment.csv", delimiter=";")
 	
-    print("KNN ; weighted = ", settings.knn_weighted)
-	
+    print(f"KNN ; weighted = {settings.knn.weighted}\n")
+
+
     # --------- A -----------
     one_star_wordcount_mean = df[df["Star Rating"] == 1]["wordcount"].mean()
-    print(f"Mean wordcount for 1 star reviews: {one_star_wordcount_mean}")
+    print(f"Mean wordcount for 1 star reviews: {one_star_wordcount_mean}\n")
 
     if settings.verbose: print("Missing title sentiment values", df["titleSentiment"].isna().sum())
     
@@ -47,101 +49,134 @@ def exercise_2():
 
     if settings.verbose: print(df.head())
 
+    classes = [1,2,3,4,5] # possible star ratings
+
     # --------- B -----------
     # Randomize the rows
     df = df.sample(frac=1, random_state=42)
 
-    # Calculate the index to split at
-    split_index = int(0.7 * len(df))
-    # Split the DataFrame into 70% train and 30% test
-    train_data = df.iloc[:split_index]
-    test_data = df.iloc[split_index:]
-
-    if settings.verbose:
-        print(train_data.head())
-        print(test_data.head())
-
-
-    # --------- C -----------
-    knn = KNN(train_data)
     pd.set_option('mode.chained_assignment', None) # FIXME: This is a hack to avoid a warning
 
-    K = 4
-	# Predict the star rating for each row in the test data
-    test_data["predicted_star_rating"] = test_data.apply(
-		lambda row: knn.predict(
-            X=row[["wordcount", "titleSentiment", "sentimentValue"]],
-            K=K,
-            weighted=settings.knn_weighted
-        ),
-		axis=1
-	)
+    if not settings.knn.run_metrics:
+        # Calculate the index to split at
+        split_index = int(0.7 * len(df))
+        # Split the DataFrame into 70% train and 30% test
+        train_data = df.iloc[:split_index]
+        test_data = df.iloc[split_index:]
 
-    if settings.verbose: print(test_data.head())
+        if settings.verbose:
+            print(train_data.head())
+            print(test_data.head())
 
-    predicted_incorrect = 0
-    for _, row in test_data.iterrows():
-        if row["predicted_star_rating"] != row["Star Rating"]: predicted_incorrect += 1
 
-    print(f"Predicted incorrect: {predicted_incorrect}")
-	
+        # --------- C -----------
+        knn = KNN(train_data)
 
-    # --------- D -----------
-    # Print the confusion matrix
-    classes = [1,2,3,4,5]
-    confusion_matrix = np.zeros((len(classes), len(classes)), dtype=int)
+        # Predict the star rating for each row in the test data
+        test_data["predicted_star_rating"] = test_data.apply(
+            lambda row: knn.predict(
+                X=row[["wordcount", "titleSentiment", "sentimentValue"]],
+                K=settings.knn.k,
+                weighted=settings.knn.weighted
+            ),
+            axis=1
+        )
 
-    for _, row in test_data.iterrows():
-        confusion_matrix[int(row["Star Rating"]) - 1][int(row["predicted_star_rating"]) - 1] += 1
+        if settings.verbose: print(test_data.head())
 
-    plot_confusion_matrix(confusion_matrix, classes)
-	
-    # Calculate TP, TN, FP and FN
-    evaluation_measures = {}
-    for category in classes:
-        evaluation_measures[category] = {
-            "TP": 0,
-            "TN": 0,
-            "FP": 0,
-            "FN": 0,
-        }
-    for i in range(len(classes)):
-        for j in range(len(classes)):
-            category_actual = classes[i]
-            category_predicted = classes[j]
+
+        # --------- D -----------
+        # Print the confusion matrix
+        confusion_matrix = np.zeros((len(classes), len(classes)), dtype=int)
+
+        for _, row in test_data.iterrows():
+            confusion_matrix[int(row["Star Rating"]) - 1][int(row["predicted_star_rating"]) - 1] += 1
+
+        plot_confusion_matrix(confusion_matrix, classes)
+        
+        ev_measures = calc_evaluation_measures(classes, confusion_matrix)
+        
+        for rating in classes:
+            print(f"Precision for {rating} stars: {ev_measures[rating]['precision']:.3f}")
+    else:
+        # --------- Data Split Analysis -----------
+
+        split_indexes = [0.5, 0.6, 0.7, 0.8, 0.9]
+        precisions = {}
+
+        for percentage in split_indexes:
+            precisions[percentage] = {rating: None for rating in classes}
+
+        for percentage in split_indexes:
+            split_index = int(percentage * len(df))
+            train_data = df.iloc[:split_index]
+            test_data = df.iloc[split_index:]
+
+            knn = KNN(train_data)
+        
+            test_data["predicted_star_rating"] = test_data.apply(
+                lambda row: knn.predict(
+                    X=row[["wordcount", "titleSentiment", "sentimentValue"]],
+                    K=settings.knn.k,
+                    weighted=settings.knn.weighted
+                ),
+                axis=1
+            )
+
+            confusion_matrix = np.zeros((len(classes), len(classes)), dtype=int)
+
+            for _, row in test_data.iterrows():
+                confusion_matrix[int(row["Star Rating"]) - 1][int(row["predicted_star_rating"]) - 1] += 1
             
-            cell_value = confusion_matrix[i][j]
+            plot_confusion_matrix(confusion_matrix, classes, filename=f"confusion_matrix_{percentage*100}.png")
+
+            ev_measures = calc_evaluation_measures(classes, confusion_matrix)
+
+            for rating in classes:
+                precisions[percentage][rating] = ev_measures[rating]['precision']
             
-            if category_actual == category_predicted:
-                evaluation_measures[category_actual]["TP"] += cell_value
-                for category_other in classes:
-                    if category_other != category_actual:
-                        evaluation_measures[category_other]["TN"] += cell_value
-            else:
-                evaluation_measures[category_actual]["FN"] += cell_value
-                evaluation_measures[category_predicted]["FP"] += cell_value
-    
-    for rating, measures in evaluation_measures.items():
-        TP = measures["TP"]
-        TN = measures["TN"]
-        FP = measures["FP"]
-        FN = measures["FN"]
-        accuracy = (TP + TN)/(TP+TN+FP+FN)
-        precision = (TP)/(TP+FP)
-        fp_rate = (FP)/(TN+FP)
-        recall = (TP)/(TP+FN)
-        f1_score = 2*precision*recall/(precision+recall)
-        print(f"Rating: {rating} stars")
-        # print(f"TP: {measures['TP']:d}")
-        # print(f"TN: {measures['TN']:d}")
-        # print(f"FP: {measures['FP']:d}")
-        # print(f"FN: {measures['FN']:d}")
-        # print(f"Accuracy: {accuracy:.3f}")
-        print(f"Precision: {precision:.3f}")
-        # print(f"Tasa_FP: {fp_rate:.3f}")
-        # print(f"Recall: {recall:.3f}")
-        # print(f"F1: {f1_score:.3f}")
-        print()
+        plot_values_vs_variable(precisions, split_indexes, classes, xlabel="Split percentage", ylabel="Precision", filename="precision_vs_split.png")
+
+
+        # --------- K parameter Analysis -----------
+
+        ks = [1, 3, 5, 7, 10]
+
+        precisions = {}
+
+        for k in ks:
+            precisions[k] = {rating: None for rating in classes}
+
+        for k in ks:
+            split_index = int(0.7 * len(df)) # 70% split
+            train_data = df.iloc[:split_index]
+            test_data = df.iloc[split_index:]
+
+            knn = KNN(train_data)
+        
+            test_data["predicted_star_rating"] = test_data.apply(
+                lambda row: knn.predict(
+                    X=row[["wordcount", "titleSentiment", "sentimentValue"]],
+                    K=k,
+                    weighted=settings.knn.weighted
+                ),
+                axis=1
+            )
+
+            confusion_matrix = np.zeros((len(classes), len(classes)), dtype=int)
+
+            for _, row in test_data.iterrows():
+                confusion_matrix[int(row["Star Rating"]) - 1][int(row["predicted_star_rating"]) - 1] += 1
+            
+            plot_confusion_matrix(confusion_matrix, classes, filename=f"confusion_matrix_k_{k}.png")
+
+            ev_measures = calc_evaluation_measures(classes, confusion_matrix)
+
+            for rating in classes:
+                precisions[k][rating] = ev_measures[rating]['precision']
+            
+        plot_values_vs_variable(precisions, ks, classes, xlabel="K", ylabel="Precision", filename="precision_vs_k.png")
+
 
 if __name__ == "__main__":
     main()

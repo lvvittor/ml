@@ -1,5 +1,9 @@
 {
     "exercise": 2,
     "verbose": false,
-    "knn_weighted": true
+    "knn": {
+        "k": 3,
+        "weighted": true,
+        "run_metrics": true
+    }
 }

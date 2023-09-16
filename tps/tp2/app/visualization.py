@@ -23,5 +23,19 @@ def plot_confusion_matrix(confusion_matrix: list[list[int]], categories: np.arra
         plt.ylabel("Real")
         plt.tight_layout()
         plt.savefig(f"{settings.Config.out_dir}/{filename}")
-        plt.show()
+        # plt.show()
         plt.close()
+
+
+def plot_values_vs_variable(values: dict, variables: list, classes: list,  xlabel: str = "variable", ylabel: str = "value", filename = "values_vs_variable.png"):
+    plt.figure(figsize=(8, 6))
+
+    for _class in classes:
+        plt.plot(variables, [values[var][_class] for var in variables], label=_class, marker="o")
+
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.tight_layout()
+    plt.legend()
+    plt.savefig(f"{settings.Config.out_dir}/{filename}")
+    plt.close()
