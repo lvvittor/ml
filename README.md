@@ -29,3 +29,8 @@ poetry add <packageName>
 ```
 poetry run python exs/$(ex)/app/main.py
 ```
+
+- Run notebooks:
+```
+poetry run jupyter lab
+```
