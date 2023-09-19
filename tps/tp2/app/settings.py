@@ -19,6 +19,10 @@ class KNN(BaseModel):
     run_metrics: bool
 
 
+class DecisionTree(BaseModel):
+    run_metrics: bool
+
+
 class Settings(BaseSettings):
     """
     Settings for the application.
@@ -36,6 +40,7 @@ class Settings(BaseSettings):
     exercise: int = 1
     verbose: bool = False
     knn: KNN = KNN(weighted=False, k=5, run_metrics=False)
+    decision_tree: DecisionTree = DecisionTree(run_metrics=False)
 
     class Config:
         env_file_encoding = 'utf-8'

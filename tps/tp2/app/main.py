@@ -1,11 +1,15 @@
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
+from metrics import MetricsCalculator
+from sklearn.model_selection import train_test_split
 
 from settings import settings
 from knn import KNN
-from visualization import plot_confusion_matrix, plot_values_vs_variable
-from metrics import calc_evaluation_measures
+from visualization import plot_confusion_matrix, plot_values_vs_variable, plot_node_amt_vs_accuracy
+from metrics import calc_evaluation_measures, MetricsCalculator
+from decision_tree import DecisionTree
+from random_forest import RandomForest
 
 def main():
 	match settings.exercise:
@@ -18,7 +22,122 @@ def main():
 
 
 def exercise_1():
-	pass
+    # Read the CSV file into a DataFrame and clean the data (remove the rows with missing values)
+    df = pd.read_csv(f"{settings.Config.data_dir}/german_credit.csv", delimiter=",")
+    # split the data into features and target variable where the target column is Creditability
+    X = df.drop("Creditability", axis=1).to_numpy()
+    y = df["Creditability"].to_numpy()
+    classes = df["Creditability"].unique()
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4, random_state=42)
+
+    metrics = MetricsCalculator()
+
+    if not settings.decision_tree.run_metrics:
+        # Decision Tree
+        decision_tree = DecisionTree()
+        decision_tree.fit(X_train, y_train)
+        predictions = decision_tree.predict(X_test)
+        cm = metrics.confusion_matrix(y_test, predictions, 1)
+        plot_confusion_matrix(cm, classes, filename="decision_tree_cm_v2.png")
+        print(f"Decision tree node amount: {decision_tree.total_nodes}")
+        print(f"Decision tree accuracy: {metrics.accuracy(y_test, predictions)}\n")
+
+        # Random Forest
+        random_forest = RandomForest()
+        random_forest.fit(X_train, y_train)
+        predictions = random_forest.predict(X_test)
+        cm = metrics.confusion_matrix(y_test, predictions, 1)
+        plot_confusion_matrix(cm, classes, filename="random_forest_cm_v2.png")
+        print(f"Forest tree's node amount:", [tree.total_nodes for tree in random_forest.trees])
+        print(f"Forest tree's AVG node amount:", np.mean([tree.total_nodes for tree in random_forest.trees]))
+        print(f"Random forest accuracy: {metrics.accuracy(y_test, predictions)}")
+    else:
+        # Run node amount analysis
+        min_samples_splits = [1, 2, 5, 10, 15, 20, 25]
+        max_depths = [20, 12, 10, 8, 6, 4, 3]
+        runs = 10
+
+        print("---------- Running metrics for Decision Tree ---------\n")
+
+        run_node_amounts = {}
+        run_accuracies = {}
+
+        for run in range(runs):
+            print(f"Run {run+1} of {runs}")
+
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4)
+
+            for i in range(len(min_samples_splits)):
+                decision_tree = DecisionTree(
+                    min_samples_split=min_samples_splits[i],
+                    max_depth=max_depths[i]
+                )
+                decision_tree.fit(X_train, y_train)
+                predictions = decision_tree.predict(X_test)
+
+                run_node_amounts[run] = run_node_amounts.get(run, []) + [decision_tree.total_nodes]
+                run_accuracies[run] = run_accuracies.get(run, []) + [metrics.accuracy(y_test, predictions)]
+        
+        node_amounts = []
+        accuracies = []
+        errors = []
+            
+        for i in range (len(min_samples_splits)):
+            node_amounts.append(np.mean([run_node_amounts[run][i] for run in range(runs)]))
+            accuracies.append(np.mean([run_accuracies[run][i] for run in range(runs)]))
+            errors.append(np.std([run_accuracies[run][i] for run in range(runs)]))
+
+            print(f"Metrics for mins_samples={min_samples_splits[i]} ; max_depth={max_depths[i]}")
+
+            print(f"Node amount: {node_amounts[i]}")
+            print(f"Accuracy: {accuracies[i]}")
+            print(f"Error: {errors[i]}")
+            print()
+
+        plot_node_amt_vs_accuracy(node_amounts, accuracies, errors=errors, filename="DT_node_amt_vs_accuracy.png")
+
+
+        print("--------- Running metrics for Random Forest -----------\n")
+
+        runs = 10
+        run_node_amounts = {}
+        run_accuracies = {}
+
+        for run in range(runs):
+            print(f"Run {run+1} of {runs}")
+
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4)
+
+            for i in range(len(min_samples_splits)):
+                random_forest = RandomForest(
+                    min_samples_split=min_samples_splits[i],
+                    max_depth=max_depths[i]
+                )
+                random_forest.fit(X_train, y_train)
+                predictions = random_forest.predict(X_test)
+
+                avg_node_amount = np.mean([tree.total_nodes for tree in random_forest.trees])
+                run_node_amounts[run] = run_node_amounts.get(run, []) + [avg_node_amount]
+                run_accuracies[run] = run_accuracies.get(run, []) + [metrics.accuracy(y_test, predictions)]
+        
+        node_amounts = []
+        accuracies = []
+        errors = []
+            
+        for i in range (len(min_samples_splits)):
+            node_amounts.append(np.mean([run_node_amounts[run][i] for run in range(runs)]))
+            accuracies.append(np.mean([run_accuracies[run][i] for run in range(runs)]))
+            errors.append(np.std([run_accuracies[run][i] for run in range(runs)]))
+
+            print(f"Metrics for mins_samples={min_samples_splits[i]} ; max_depth={max_depths[i]}")
+
+            print(f"Node amount: {node_amounts[i]}")
+            print(f"Accuracy: {accuracies[i]}")
+            print(f"Error: {errors[i]}")
+            print()
+
+        plot_node_amt_vs_accuracy(node_amounts, accuracies, errors=errors, filename="RF_node_amt_vs_accuracy.png")
 
 
 def exercise_2():

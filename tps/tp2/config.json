@@ -1,9 +1,12 @@
 {
-    "exercise": 2,
+    "exercise": 1,
     "verbose": false,
     "knn": {
         "k": 3,
         "weighted": true,
+        "run_metrics": false
+    },
+    "decision_tree": {
         "run_metrics": true
     }
 }
