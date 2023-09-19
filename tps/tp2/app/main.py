@@ -54,8 +54,8 @@ def exercise_1():
         print(f"Random forest accuracy: {metrics.accuracy(y_test, predictions)}")
     else:
         # Run node amount analysis
-        min_samples_splits = [1, 2, 5, 10, 15, 20, 25]
-        max_depths = [20, 12, 10, 8, 6, 4, 3]
+        min_samples_splits = [1, 2, 5, 10, 15, 20, 25, 35]
+        max_depths = [20, 12, 10, 8, 6, 4, 3, 2]
         runs = 10
 
         print("---------- Running metrics for Decision Tree ---------\n")
