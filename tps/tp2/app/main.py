@@ -284,7 +284,7 @@ def exercise_2():
 
         run_accuracies = {}
 
-        ks = [1, 4, 7, 10, 15]
+        ks = [1, 3, 7, 10, 15]
         precisions = {}
         errors = {}
 
