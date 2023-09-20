@@ -35,22 +35,29 @@ def plot_confusion_matrix(confusion_matrix: list[list[int]], categories: np.arra
         plt.xticks(range(normalized_confusion_matrix.shape[1]), labels=categories)
         plt.yticks(range(normalized_confusion_matrix.shape[0]), labels=categories)
 
-        plt.xlabel("Predicted")
-        plt.ylabel("Real")
+        plt.xlabel("Predicted", fontsize=14)
+        plt.ylabel("Real", fontsize=14)
         plt.tight_layout()
         plt.savefig(f"{settings.Config.out_dir}/{filename}")
         # plt.show()
         plt.close()
 
 
-def plot_values_vs_variable(values: dict, variables: list, classes: list,  xlabel: str = "variable", ylabel: str = "value", filename = "values_vs_variable.png"):
+def plot_values_vs_variable(values: dict, variables: list, classes: list, errors: dict,  xlabel: str = "variable", ylabel: str = "value", filename = "values_vs_variable.png"):
     plt.figure(figsize=(8, 6))
 
-    for _class in classes:
-        plt.plot(variables, [values[var][_class] for var in variables], label=_class, marker="o")
+    # Get the default color cycle
+    prop_cycle = plt.rcParams['axes.prop_cycle']
+    colors = prop_cycle.by_key()['color']
 
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
+    for i, _class in enumerate(classes):
+        data = [values[var][_class] for var in variables]
+        error = [errors[var][_class] for var in variables]
+        plt.errorbar(variables, data, yerr=error, fmt="o", alpha=0.4, capsize=15, color=colors[i])
+        plt.plot(variables, data, label=str(_class), marker="o", color=colors[i])
+
+    plt.xlabel(xlabel, fontsize=14)
+    plt.ylabel(ylabel, fontsize=14)
     plt.tight_layout()
     plt.legend()
     plt.savefig(f"{settings.Config.out_dir}/{filename}")
@@ -64,8 +71,8 @@ def plot_node_amt_vs_accuracy(node_amt: list, accuracies: list, errors: list = N
         plt.plot(node_amt, accuracies) # connect markers with straight lines
     else:
         plt.plot(node_amt, accuracies, marker="o")
-    plt.xlabel("Node amount")
-    plt.ylabel("Accuracy")
+    plt.xlabel("Node amount", fontsize=14)
+    plt.ylabel("Accuracy", fontsize=14)
     plt.tight_layout()
     plt.grid()
     plt.savefig(f"{settings.Config.out_dir}/{filename}")

@@ -216,85 +216,129 @@ def exercise_2():
         ev_measures = calc_evaluation_measures(classes, confusion_matrix)
         
         for rating in classes:
-            print(f"Precision for {rating} stars: {ev_measures[rating]['precision']:.3f}")
+            print(f"Accuracy for {rating} stars: {ev_measures[rating]['accuracy']:.3f}")
     else:
         # --------- Data Split Analysis -----------
 
+        runs = 5
+        run_accuracies = {}
+
         split_indexes = [0.5, 0.6, 0.7, 0.8, 0.9]
         precisions = {}
+        errors = {}
 
         for percentage in split_indexes:
             precisions[percentage] = {rating: None for rating in classes}
+            errors[percentage] = {rating: None for rating in classes}
+
+        for run in range(runs):
+            print(f"Split run {run+1} of {runs}")
+
+            run_accuracies[run] = {}
+            df = df.sample(frac=1) # randomize rows for each run
+
+            for percentage in split_indexes:
+                run_accuracies[run][percentage] = {}
+
+                split_index = int(percentage * len(df))
+                train_data = df.iloc[:split_index]
+                test_data = df.iloc[split_index:]
+
+                knn = KNN(train_data)
+            
+                test_data["predicted_star_rating"] = test_data.apply(
+                    lambda row: knn.predict(
+                        X=row[["wordcount", "titleSentiment", "sentimentValue"]],
+                        K=settings.knn.k,
+                        weighted=settings.knn.weighted
+                    ),
+                    axis=1
+                )
+
+                confusion_matrix = np.zeros((len(classes), len(classes)), dtype=int)
+
+                for _, row in test_data.iterrows():
+                    confusion_matrix[int(row["Star Rating"]) - 1][int(row["predicted_star_rating"]) - 1] += 1
+                
+                # plot_confusion_matrix(confusion_matrix, classes, filename=f"confusion_matrix_{percentage*100}.png")
+
+                ev_measures = calc_evaluation_measures(classes, confusion_matrix)
+
+                for rating in classes:
+                    run_accuracies[run][percentage][rating] = ev_measures[rating]['accuracy']
 
         for percentage in split_indexes:
-            split_index = int(percentage * len(df))
-            train_data = df.iloc[:split_index]
-            test_data = df.iloc[split_index:]
-
-            knn = KNN(train_data)
-        
-            test_data["predicted_star_rating"] = test_data.apply(
-                lambda row: knn.predict(
-                    X=row[["wordcount", "titleSentiment", "sentimentValue"]],
-                    K=settings.knn.k,
-                    weighted=settings.knn.weighted
-                ),
-                axis=1
-            )
-
-            confusion_matrix = np.zeros((len(classes), len(classes)), dtype=int)
-
-            for _, row in test_data.iterrows():
-                confusion_matrix[int(row["Star Rating"]) - 1][int(row["predicted_star_rating"]) - 1] += 1
-            
-            plot_confusion_matrix(confusion_matrix, classes, filename=f"confusion_matrix_{percentage*100}.png")
-
-            ev_measures = calc_evaluation_measures(classes, confusion_matrix)
-
             for rating in classes:
-                precisions[percentage][rating] = ev_measures[rating]['precision']
+                precisions[percentage][rating] = np.mean([run_accuracies[run][percentage][rating] for run in range(runs)])
+                errors[percentage][rating] = np.std([run_accuracies[run][percentage][rating] for run in range(runs)])
             
-        plot_values_vs_variable(precisions, split_indexes, classes, xlabel="Split percentage", ylabel="Precision", filename="precision_vs_split.png")
+        plot_values_vs_variable(precisions, split_indexes, classes,
+            errors=errors,
+            xlabel="Split percentage",
+            ylabel="Accuracy",
+            filename="precision_vs_split.png"
+        )
 
 
         # --------- K parameter Analysis -----------
 
-        ks = [1, 3, 5, 7, 10]
+        run_accuracies = {}
 
+        ks = [1, 4, 7, 10, 15]
         precisions = {}
+        errors = {}
 
         for k in ks:
             precisions[k] = {rating: None for rating in classes}
+            errors[k] = {rating: None for rating in classes}
 
-        for k in ks:
-            split_index = int(0.7 * len(df)) # 70% split
-            train_data = df.iloc[:split_index]
-            test_data = df.iloc[split_index:]
+        for run in range(runs):
+            print(f"K run {run+1} of {runs}")
 
-            knn = KNN(train_data)
+            run_accuracies[run] = {}
+            df = df.sample(frac=1) # randomize rows for each run
+
+            for k in ks:
+                run_accuracies[run][k] = {}
+
+                split_index = int(0.7 * len(df)) # 70% split
+                train_data = df.iloc[:split_index]
+                test_data = df.iloc[split_index:]
+
+                knn = KNN(train_data)
+            
+                test_data["predicted_star_rating"] = test_data.apply(
+                    lambda row: knn.predict(
+                        X=row[["wordcount", "titleSentiment", "sentimentValue"]],
+                        K=k,
+                        weighted=settings.knn.weighted
+                    ),
+                    axis=1
+                )
+
+                confusion_matrix = np.zeros((len(classes), len(classes)), dtype=int)
+
+                for _, row in test_data.iterrows():
+                    confusion_matrix[int(row["Star Rating"]) - 1][int(row["predicted_star_rating"]) - 1] += 1
+                
+                # plot_confusion_matrix(confusion_matrix, classes, filename=f"confusion_matrix_k_{k}.png")
+
+                ev_measures = calc_evaluation_measures(classes, confusion_matrix)
+
+                for rating in classes:
+                    run_accuracies[run][k][rating] = ev_measures[rating]['accuracy']
         
-            test_data["predicted_star_rating"] = test_data.apply(
-                lambda row: knn.predict(
-                    X=row[["wordcount", "titleSentiment", "sentimentValue"]],
-                    K=k,
-                    weighted=settings.knn.weighted
-                ),
-                axis=1
-            )
-
-            confusion_matrix = np.zeros((len(classes), len(classes)), dtype=int)
-
-            for _, row in test_data.iterrows():
-                confusion_matrix[int(row["Star Rating"]) - 1][int(row["predicted_star_rating"]) - 1] += 1
-            
-            plot_confusion_matrix(confusion_matrix, classes, filename=f"confusion_matrix_k_{k}.png")
-
-            ev_measures = calc_evaluation_measures(classes, confusion_matrix)
-
+        for k in ks:
             for rating in classes:
-                precisions[k][rating] = ev_measures[rating]['precision']
+                precisions[k][rating] = np.mean([run_accuracies[run][k][rating] for run in range(runs)])
+                errors[k][rating] = np.std([run_accuracies[run][k][rating] for run in range(runs)])
             
-        plot_values_vs_variable(precisions, ks, classes, xlabel="K", ylabel="Precision", filename="precision_vs_k.png")
+        plot_values_vs_variable(precisions, ks, classes,
+            errors=errors,
+            xlabel="K",
+            ylabel="Accuracy",
+            filename="precision_vs_k.png"
+        )
 
 
 if __name__ == "__main__":

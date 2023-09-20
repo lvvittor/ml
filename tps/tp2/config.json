@@ -1,10 +1,10 @@
 {
-    "exercise": 1,
+    "exercise": 2,
     "verbose": false,
     "knn": {
-        "k": 3,
+        "k": 4,
         "weighted": true,
-        "run_metrics": false
+        "run_metrics": true
     },
     "decision_tree": {
         "run_metrics": true
