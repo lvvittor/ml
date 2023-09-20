@@ -39,7 +39,7 @@ def exercise_1():
         decision_tree.fit(X_train, y_train)
         predictions = decision_tree.predict(X_test)
         cm = metrics.confusion_matrix(y_test, predictions, 1)
-        plot_confusion_matrix(cm, classes, filename="decision_tree_cm_v2.png")
+        plot_confusion_matrix(cm, classes, filename="decision_tree_cm.png")
         print(f"Decision tree node amount: {decision_tree.total_nodes}")
         print(f"Decision tree accuracy: {metrics.accuracy(y_test, predictions)}\n")
 
@@ -48,7 +48,7 @@ def exercise_1():
         random_forest.fit(X_train, y_train)
         predictions = random_forest.predict(X_test)
         cm = metrics.confusion_matrix(y_test, predictions, 1)
-        plot_confusion_matrix(cm, classes, filename="random_forest_cm_v2.png")
+        plot_confusion_matrix(cm, classes, filename="random_forest_cm.png")
         print(f"Forest tree's node amount:", [tree.total_nodes for tree in random_forest.trees])
         print(f"Forest tree's AVG node amount:", np.mean([tree.total_nodes for tree in random_forest.trees]))
         print(f"Random forest accuracy: {metrics.accuracy(y_test, predictions)}")

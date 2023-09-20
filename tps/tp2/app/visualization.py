@@ -67,8 +67,7 @@ def plot_values_vs_variable(values: dict, variables: list, classes: list, errors
 def plot_node_amt_vs_accuracy(node_amt: list, accuracies: list, errors: list = None, filename = "node_amt_vs_accuracy.png"):
     plt.figure(figsize=(8, 6))
     if errors is not None:
-        plt.errorbar(node_amt, accuracies, yerr=errors, fmt='o', capsize=4, markersize=6, color="black")
-        plt.plot(node_amt, accuracies) # connect markers with straight lines
+        plt.errorbar(node_amt, accuracies, yerr=errors, marker='o', capsize=8, linestyle='-')
     else:
         plt.plot(node_amt, accuracies, marker="o")
     plt.xlabel("Node amount", fontsize=14)
