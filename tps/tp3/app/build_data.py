@@ -1,14 +1,15 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 from settings import settings
 
 def build_tp3_1():
-    np.random.seed(1)
+    np.random.seed(2)
 
     num_points = 50
 
-    points = np.random.uniform(0, 5, size=(2 * num_points, 2))
+    points = np.random.uniform(0, 5, size=(num_points, 2))
     labels = np.where(points[:, 1] >= points[:, 0], 1, -1)
 
     df = pd.DataFrame(data={'X': points[:, 0], 'Y': points[:, 1], 'Label': labels})
@@ -38,6 +39,37 @@ def build_tp3_2():
 
     df.to_csv(settings.Config.data_dir+'/TP3-2.csv', index=False)
 
+
+def plot_datasets():
+    df = pd.read_csv(settings.Config.data_dir+'/TP3-1.csv')
+
+    class1_df = df[df['Label'] == 1]
+    class2_df = df[df['Label'] == -1]
+
+    plt.scatter(class1_df['X'], class1_df['Y'], c='red', label='1')
+
+    plt.scatter(class2_df['X'], class2_df['Y'], c='blue', label='-1')
+	
+    x_values = np.linspace(0, 5, 100)
+    plt.plot(x_values, x_values, '--', c='green', label='y=x')
+
+    plt.savefig(f"{settings.Config.out_dir}/TP3-1.png")
+    plt.close()
+	
+    df = pd.read_csv(settings.Config.data_dir+'/TP3-2.csv')
+
+    class1_df = df[df['Label'] == 1]
+    class2_df = df[df['Label'] == -1]
+
+    plt.scatter(class1_df['X'], class1_df['Y'], c='red', label='1')
+
+    plt.scatter(class2_df['X'], class2_df['Y'], c='blue', label='-1')
+	
+    x_values = np.linspace(0, 5, 100)
+    plt.plot(x_values, x_values, '--', c='green', label='y=x')
+
+    plt.savefig(f"{settings.Config.out_dir}/TP3-2.png")
+    plt.close()
 
 
 if __name__ == "__main__":
