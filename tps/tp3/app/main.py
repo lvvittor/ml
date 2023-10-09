@@ -1,12 +1,13 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
 import math
+from sklearn.model_selection import train_test_split
 
 from settings import settings
 from build_data import plot_datasets
 from step_perceptron import StepPerceptron
+from svm import SVM
 
 def main():
 	match settings.exercise:
@@ -135,7 +136,20 @@ def exercise_1():
 
     # ----------- D -------------
 
-    # TODO: implement
+    df = pd.read_csv(settings.Config.data_dir+"/TP3-2.csv")
+
+    inputs = df[['X', 'Y']].values
+    expected_outputs = df['Label'].values
+	
+    test_size = 0.3
+
+    X_train, X_test, y_train, y_test = train_test_split(inputs, expected_outputs, test_size=test_size, random_state=40)
+	
+    svm = SVM()
+	
+    w, b, losses = svm.fit(X_train, y_train)
+	
+    svm.visualize_svm(X_test, y_test, w, b)
 
 
 def exercise_2():

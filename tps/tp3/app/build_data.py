@@ -7,7 +7,7 @@ from settings import settings
 def build_tp3_1():
     np.random.seed(2)
 
-    num_points = 50
+    num_points = 200
 
     points = np.random.uniform(0, 5, size=(num_points, 2))
     labels = np.where(points[:, 1] >= points[:, 0], 1, -1)
@@ -20,7 +20,7 @@ def build_tp3_1():
 def build_tp3_2():
     np.random.seed(3)
 
-    num_points = 50
+    num_points = 200
 
     points = np.random.uniform(0, 5, size=(2 * num_points, 2))
     labels = np.where(points[:, 1] >= points[:, 0], 1, -1)
