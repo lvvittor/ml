@@ -55,6 +55,14 @@ class StepPerceptron():
 
         return epoch + 1, self.is_converged()
 
+
+    def predict(self, X):
+        # Compute the perceptron's excitation for each input, including the sum of the bias
+        excitations = np.dot(X, self.weights[1:]) + self.weights[0]
+
+        # Apply the activation function to each element of the array
+        return np.vectorize(self.activation_func)(excitations)
+
     
     def update_weights(self):
         deltas = self.compute_deltas()
@@ -97,13 +105,13 @@ class StepPerceptron():
         return self.get_error() <= 0
 
 
-    def save_animation_frames(self, file_name = "step_perceptron"):
+    def save_animation_frames(self, file_name = "step_perceptron", count = 100):
         # remove bias term
         _inputs = self.inputs[:, 1:]
 
-        for i, (weights, outputs) in enumerate(
+        for i, (weights, outputs) in reversed(list(enumerate(
             zip(self.historical_weights, self.historical_outputs)
-        ):
+        ))):
             # plot the points
             sns.scatterplot(
                 x=_inputs[:, 0],
@@ -113,6 +121,11 @@ class StepPerceptron():
                 palette=["blue", "red"],
                 marker="o",
             )
+
+            if count == 0:
+                break
+            else:
+                count -= 1
 
             xmin, xmax = np.min(_inputs[:, 0]), np.max(_inputs[:, 0])
             x = np.linspace(xmin - 100, xmax + 100, 1000)
@@ -187,6 +200,38 @@ class StepPerceptron():
 
         fig.clf()
     
+
+    def visualize_step_perceptron(self, X_test, y_test, filename = "step_perceptron"):
+
+        def get_hyperplane_value(x, w, b):
+            """Returns the y-value of the hyperplane at point `x`"""
+
+            # offset = b + x * w1 + y * w2
+            return (-w[0] * x - b) / w[1]
+
+        fig = plt.figure()
+        ax = fig.add_subplot(1,1,1)
+
+        # Plot testing set
+        plt.scatter(X_test[:, 0], X_test[:, 1], marker="o", c=y_test)
+
+        # Get the x-values for the most external points
+        x0_1 = np.amin(X_test[:, 0])
+        x0_2 = np.amax(X_test[:, 0])
+
+        # Get the y-values for the hyperplane, at the most external points
+        x1_1 = get_hyperplane_value(x0_1, self.weights[1:], self.weights[0])
+        x1_2 = get_hyperplane_value(x0_2, self.weights[1:], self.weights[0])
+
+
+        ax.plot([x0_1, x0_2], [x1_1, x1_2], "y--")
+
+        ax.set_ylim([0, 5])
+        ax.set_xlim([0, 5])
+
+        plt.savefig(f"{settings.Config.out_dir}/{filename}.png")
+        plt.clf()
+
 
     def __str__(self) -> str:
         output = "Expected - Actual\n"

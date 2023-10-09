@@ -37,7 +37,7 @@ class SVM():
         losses = []
 
         # Gradient Descent logic
-        for i in range(epochs):
+        for _ in range(epochs):
             # Calculating the Hinge Loss
             l = self.hingeloss(w, b, X, Y)
 
@@ -54,7 +54,7 @@ class SVM():
                         x = ids[j]
                         ti = Y[x] * (np.dot(w, X[x].T) + b)
 
-                        if ti > 1:
+                        if ti >= 1:
                             gradw += 0
                             gradb += 0
                         else:
@@ -82,26 +82,35 @@ class SVM():
         plt.scatter(X[:, 0], X[:, 1], c=y)
 
 
-    def visualize_svm(self, X_test, y_test, w, b):
+    def visualize_svm(self, X_test, y_test, filename = "svm"):
 
         def get_hyperplane_value(x, w, b, offset):
-            return (-w[0][0] * x + b + offset) / w[0][1]
+            """Returns the y-value of the hyperplane at point `x`"""
+
+            # offset = b + x * w1 + y * w2
+            return (-w[0][0] * x - b + offset) / w[0][1]
 
         fig = plt.figure()
         ax = fig.add_subplot(1,1,1)
+
+        # Plot testing set
         plt.scatter(X_test[:, 0], X_test[:, 1], marker="o", c=y_test)
 
+        # Get the x-values for the most external points
         x0_1 = np.amin(X_test[:, 0])
         x0_2 = np.amax(X_test[:, 0])
 
-        x1_1 = get_hyperplane_value(x0_1, w, b, 0)
-        x1_2 = get_hyperplane_value(x0_2, w, b, 0)
+        # Get the y-values for the hyperplane, at the most external points
+        x1_1 = get_hyperplane_value(x0_1, self.w, self.b, 0)
+        x1_2 = get_hyperplane_value(x0_2, self.w, self.b, 0)
 
-        x1_1_m = get_hyperplane_value(x0_1, w, b, -1)
-        x1_2_m = get_hyperplane_value(x0_2, w, b, -1)
+        # Negative hyperplane
+        x1_1_m = get_hyperplane_value(x0_1, self.w, self.b, -1)
+        x1_2_m = get_hyperplane_value(x0_2, self.w, self.b, -1)
 
-        x1_1_p = get_hyperplane_value(x0_1, w, b, 1)
-        x1_2_p = get_hyperplane_value(x0_2, w, b, 1)
+        # Positive hyperplane
+        x1_1_p = get_hyperplane_value(x0_1, self.w, self.b, 1)
+        x1_2_p = get_hyperplane_value(x0_2, self.w, self.b, 1)
 
         ax.plot([x0_1, x0_2], [x1_1, x1_2], "y--")
         ax.plot([x0_1, x0_2], [x1_1_m, x1_2_m], "k")
@@ -110,4 +119,5 @@ class SVM():
         ax.set_xlim([0, 5])
         ax.set_ylim([0, 5])
 
-        plt.show()
+        plt.savefig(f"{settings.Config.out_dir}/{filename}.png")
+        plt.clf()
