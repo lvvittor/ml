@@ -13,7 +13,6 @@ def json_config_settings_source(settings: BaseSettings) -> dict[str, Any]:
     return json.loads(Path(config_path).read_text(encoding))
 
 
-
 class Settings(BaseSettings):
     """
     Settings for the application.
