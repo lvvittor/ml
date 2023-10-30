@@ -18,7 +18,7 @@ class Kohonen:
         for i in range(self.k**2):
             self.weights[i] += self.inputs[np.random.randint(self.p)]
 
-        self.R = self.k / 2   # initial radius of the neighbourhood
+        self.R = self.k       # initial radius of the neighbourhood
         self.eta = 1.0        # initial learning rate
 
 
@@ -27,7 +27,7 @@ class Kohonen:
             # Adjust learning rate and radius linearly with the epoch
             eta = self.eta * (1 - epoch/max_epochs)     # 1 to 0
             radius = self.R * (1 - epoch/max_epochs)
-            radius = 1 if radius < 1 else radius        # k/2 to 1
+            radius = 1 if radius < 1 else radius        # k to 1
 
             # Get a random input each epoch
             x = self.inputs[np.random.randint(self.p)]
@@ -37,13 +37,14 @@ class Kohonen:
             winner_neuron_index = np.argmin(distances)
 
             # Get the indexes of all the neighbours of the winner neurone (inside the radius `R`)
-            winner_neighbours = self.get_neighbours(winner_neuron_index, radius) # includes the winner neurone itself
+            winner_neighbours, winner_distances = self.get_neighbours(winner_neuron_index, radius) # includes the winner neurone itself
 
             if (settings.verbose and epoch % 500 == 0):
                 self.log_epoch(epoch, x, eta, radius, distances, winner_neuron_index, winner_neighbours)
 
             # Update the weights of the winner neurone and its neighbours
-            self.weights[winner_neighbours] += eta * (x - self.weights[winner_neighbours])
+            d = np.repeat(winner_distances[:, np.newaxis], self.n, axis=1) # repeat the distances `n` times to have the same shape as `self.weights`
+            self.weights[winner_neighbours] += np.exp(-2*d / radius) * eta * (x - self.weights[winner_neighbours])
 
         return self.weights
 
@@ -55,6 +56,7 @@ class Kohonen:
         """
 
         neighbours = []
+        distances = []
 
         # Think of the neurons' weights as a k x k matrix
         row_i, col_i = divmod(neuron_index, self.k)
@@ -71,8 +73,9 @@ class Kohonen:
                 if distance <= radius and (include_self or distance != 0):
                     index = row * self.k + col
                     neighbours.append(index)
+                    distances.append(distance)
 
-        return neighbours
+        return neighbours, np.array(distances)
     
 
     def log_epoch(self, epoch, x, eta, radius, distances, winner_neuron_index, winner_neighbours):
@@ -140,7 +143,7 @@ class Kohonen:
         # Iterate through each neuron
         for i in range(self.k**2):
             # Get the neighbours of the neuron
-            neighbours = self.get_neighbours(neuron_index=i, radius=1, include_self=False)
+            neighbours, _ = self.get_neighbours(neuron_index=i, radius=1, include_self=False)
             # Calculate the average [euclidean] distance between the neuron and its neighbours
             distances = np.linalg.norm(self.weights[neighbours] - self.weights[i], axis=1)
             row, col = divmod(i, self.k)

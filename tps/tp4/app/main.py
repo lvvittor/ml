@@ -57,9 +57,10 @@ def data_preprocessing(df):
 def kohonen(df):
 	std_vars = df.to_numpy()
 
-	k = 4
-	epochs = 10_000
+	k = 5
+	epochs = 200_000
 
+	# TODO: try different values for `k`, `epochs`, initial `eta` and initial `R`
 	kohonen = Kohonen(k, std_vars)
 	kohonen.train(epochs)
 
