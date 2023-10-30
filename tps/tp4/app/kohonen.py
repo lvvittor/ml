@@ -1,5 +1,7 @@
 import numpy as np
 
+from settings import settings
+
 class Kohonen:
     def __init__(self, k, inputs):
         """
@@ -10,9 +12,6 @@ class Kohonen:
         self.n = inputs.shape[1]    # dimensions of each input
 
         self.inputs = inputs
-
-        # Initialize weights of each neurone with uniform distribution U(0,1).
-        # self.weights = np.random.rand(self.k**2, self.n)
 
         # Initialize weights of each neurone with random samples from the inputs.
         self.weights = np.zeros((self.k**2, self.n))
@@ -40,7 +39,8 @@ class Kohonen:
             # Get the indexes of all the neighbours of the winner neurone (inside the radius `R`)
             winner_neighbours = self.get_neighbours(winner_neuron_index, radius) # includes the winner neurone itself
 
-            # self.log_epoch(epoch, x, eta, radius, distances, winner_neuron_index, winner_neighbours)
+            if (settings.verbose and epoch % 500 == 0):
+                self.log_epoch(epoch, x, eta, radius, distances, winner_neuron_index, winner_neighbours)
 
             # Update the weights of the winner neurone and its neighbours
             self.weights[winner_neighbours] += eta * (x - self.weights[winner_neighbours])
