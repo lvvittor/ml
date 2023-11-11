@@ -5,6 +5,7 @@ from sklearn.preprocessing import StandardScaler
 from settings import settings
 import visualization as vis
 from kohonen import Kohonen
+from kmeans import KMeans
 
 def main():
 	df = pd.read_csv(settings.Config.data_dir+"/movie_data.csv", delimiter=";")
@@ -15,6 +16,8 @@ def main():
 	match settings.exercise:
 		case 1:
 			kohonen(std_df)
+		case 2:
+			kmeans(std_df)
 		case _:
 			raise ValueError("Invalid exercise number")
 
@@ -71,6 +74,53 @@ def kohonen(df):
 	# Plot results
 	vis.neuron_heatmap(winner_neurons, k)
 	vis.u_matrix(umatrix)
+
+
+def kmeans(df):
+	k = 3
+	max_epochs = 100
+
+	kmeans = KMeans(k, df)
+	labels, _, epochs = kmeans.train(max_epochs)
+
+	print(f"Finished in {epochs} epochs")
+
+	values, counts = np.unique(labels, return_counts=True)
+	occurrences = dict(zip(values, counts))
+
+	print("Number of observations in each cluster:")
+	print(occurrences)
+
+	vis.plot_pca(df, labels)
+
+	# TODO: show principal components
+
+	# --------- Elbow method (get best `k`) ---------
+
+	# Create an elbow plot for k from 1 to 10
+	k_values = range(1, 11)
+	variations = []
+
+	for _k in k_values:
+		kmeans = KMeans(_k, df)
+		labels, inertia, epochs = kmeans.train()
+		variations.append(inertia)
+
+		if settings.verbose:
+			print(f"Ended KMeans with k={k} in {epochs} epochs.")
+
+	vis.elbow_plot(k_values, variations) # k = 6 looks best
+
+	# --------- Try different centroids ---------
+
+	# TODO: try different initial centroids
+
+	print("Centroids")
+	print(kmeans.centroids)
+
+	# 1. Plot average observations per cluster + error
+
+	# 2. Plot average difference between centroids
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn.decomposition import PCA
 
 from settings import settings
 
@@ -64,4 +65,27 @@ def u_matrix(umatrix):
 	plt.yticks([])
 	plt.tight_layout()
 	plt.savefig(f"{settings.Config.out_dir}/u_matrix.png")
+	plt.clf()
+
+
+def plot_pca(df, labels):
+	pca = PCA(n_components=2)
+	reduced_data = pca.fit_transform(df)
+
+	# Assuming 'labels' are the cluster labels obtained from k-means
+	plt.scatter(reduced_data[:, 0], reduced_data[:, 1], c=labels, cmap='viridis')
+	plt.title('Clustered Data (PCA)')
+	plt.xlabel('Principal Component 1')
+	plt.ylabel('Principal Component 2')
+	plt.tight_layout()
+	plt.savefig(f"{settings.Config.out_dir}/kmeans_pca.png")
+	plt.clf()
+
+
+def elbow_plot(k_values, variations):
+	plt.plot(k_values, variations, marker='o')
+	plt.xlabel('Number of Clusters (k)')
+	plt.ylabel('WCSS')
+	plt.tight_layout()
+	plt.savefig(f"{settings.Config.out_dir}/kmeans_elbow.png")
 	plt.clf()
