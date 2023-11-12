@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
 
 from settings import settings
 import visualization as vis
@@ -77,13 +78,14 @@ def kohonen(df):
 
 
 def kmeans(df):
-	k = 3
-	max_epochs = 100
+	k = 6
 
 	kmeans = KMeans(k, df)
-	labels, _, epochs = kmeans.train(max_epochs)
+	labels, _, epochs = kmeans.train()
 
 	print(f"Finished in {epochs} epochs")
+
+	reference_centroids = kmeans.centroids
 
 	values, counts = np.unique(labels, return_counts=True)
 	occurrences = dict(zip(values, counts))
@@ -91,9 +93,24 @@ def kmeans(df):
 	print("Number of observations in each cluster:")
 	print(occurrences)
 
-	vis.plot_pca(df, labels)
+	# Reduce dimensionality to 2D for visualization
+	pca = PCA(n_components=3)
+	reduced_data = pca.fit_transform(df)
+	weights_matrix = pca.components_
+	weights_df = pd.DataFrame(data=weights_matrix, columns=df.columns)
 
-	# TODO: show principal components
+	# Print weights for each principal component
+	print("Weights for each principal component:")
+	print(weights_df)
+
+	vis.plot_pca_weights(weights_df)
+
+	explained_variance = pca.explained_variance_ratio_
+	print("Explained variance for each principal component:")
+	print(explained_variance) # how much information (variance) can be attributed to each of the principal components
+
+	# Plot clusters
+	vis.plot_pca(reduced_data, labels)
 
 	# --------- Elbow method (get best `k`) ---------
 
@@ -113,14 +130,40 @@ def kmeans(df):
 
 	# --------- Try different centroids ---------
 
-	# TODO: try different initial centroids
+	runs = 10
 
-	print("Centroids")
-	print(kmeans.centroids)
+	cluster_observations = [[] for _ in range(k)]
+	cluster_centroids = [[] for _ in range(k)]
 
-	# 1. Plot average observations per cluster + error
+	for _ in range(runs):
+		kmeans = KMeans(k, df)
+		labels, _, _ = kmeans.train()
 
-	# 2. Plot average difference between centroids
+		values, counts = np.unique(labels, return_counts=True)
+		occurrences = dict(zip(values, counts))
+
+		for cluster, observations in occurrences.items():
+			centroid = kmeans.centroids[cluster]
+			# Get cluster reference centroid (the most similar), since centroids are not ordered
+			reference_centroid_idx = np.argmax(np.dot(reference_centroids, centroid) / (np.linalg.norm(reference_centroids, axis=1) * np.linalg.norm(centroid)))
+
+			cluster_observations[reference_centroid_idx].append(observations)
+			cluster_centroids[reference_centroid_idx].append(centroid)
+	
+	# Plot average number of observations per cluster
+	vis.plot_cluster_observations(cluster_observations)
+	
+	centroid_distances = []
+	
+	for cluster, centroids in enumerate(cluster_centroids):
+		distances = 0
+		for i, c in enumerate(centroids):
+			if i < len(centroids) - 1:
+				distances += np.linalg.norm(c - centroids[i + 1])
+		centroid_distances.append(distances / (len(centroids) - 1))
+	
+	# Plot average distance between cluster centroids
+	vis.plot_centroid_distances(centroid_distances)
 
 
 if __name__ == "__main__":

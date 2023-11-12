@@ -1,7 +1,6 @@
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.decomposition import PCA
 
 from settings import settings
 
@@ -68,24 +67,82 @@ def u_matrix(umatrix):
 	plt.clf()
 
 
-def plot_pca(df, labels):
-	pca = PCA(n_components=2)
-	reduced_data = pca.fit_transform(df)
-
+def plot_pca(reduced_data, labels):
 	# Assuming 'labels' are the cluster labels obtained from k-means
-	plt.scatter(reduced_data[:, 0], reduced_data[:, 1], c=labels, cmap='viridis')
-	plt.title('Clustered Data (PCA)')
-	plt.xlabel('Principal Component 1')
-	plt.ylabel('Principal Component 2')
-	plt.tight_layout()
+	fig = plt.figure()
+	ax = fig.add_subplot(111, projection='3d')
+	ax.scatter(reduced_data[:, 0], reduced_data[:, 1], reduced_data[:, 2], c=labels, cmap='viridis')
+	ax.set_xlabel('Principal Component 1')
+	ax.set_ylabel('Principal Component 2')
+	ax.set_zlabel('Principal Component 3')
+	fig.tight_layout()
 	plt.savefig(f"{settings.Config.out_dir}/kmeans_pca.png")
+	plt.clf()
+
+
+def plot_pca_weights(df):
+	fig, ax = plt.subplots(figsize=(14, 6))
+
+	bar_width = 0.2
+	bar_positions = np.arange(len(df.columns))
+
+	colors = ['#FFB2B2', '#9EE09E', '#B2CCFF']
+
+	variances = ["35", "16", "14"]
+
+	for i, (row, color) in enumerate(zip(df.values, colors)):
+		ax.bar(
+			bar_positions + i * bar_width,
+			row,
+			width=bar_width,
+			label=f'PC {i+1} ({variances[i]}%)',
+			color=color
+		)
+
+	ax.set_xticks(bar_positions + (len(df.columns) / 2 - 4) * bar_width)
+	ax.set_xticklabels(df.columns)
+	ax.tick_params(axis='x', labelsize=9)
+	ax.set_ylabel('Weights', fontsize=14)
+
+	ax.legend()
+	fig.tight_layout()
+
+	plt.savefig(f"{settings.Config.out_dir}/kmeans_pca_weights.png")
 	plt.clf()
 
 
 def elbow_plot(k_values, variations):
 	plt.plot(k_values, variations, marker='o')
-	plt.xlabel('Number of Clusters (k)')
-	plt.ylabel('WCSS')
+	plt.xlabel('Number of Clusters (k)', fontsize=14)
+	plt.ylabel('Inertia', fontsize=14)
 	plt.tight_layout()
 	plt.savefig(f"{settings.Config.out_dir}/kmeans_elbow.png")
+	plt.clf()
+
+
+def plot_cluster_observations(cluster_observations):
+	clusters = np.arange(len(cluster_observations)) + 1
+	count = np.zeros(len(cluster_observations))
+	errors = np.zeros(len(cluster_observations))
+
+	for cluster, observations in enumerate(cluster_observations):
+		count[cluster] = np.mean(observations)
+		errors[cluster] = np.std(observations)
+	
+	plt.bar(clusters, count, yerr=errors, capsize=5, color='skyblue', edgecolor='black')
+
+	plt.xlabel('Cluster', fontsize=14)
+	plt.ylabel('Observaciones', fontsize=14)
+	plt.tight_layout()
+	plt.savefig(f"{settings.Config.out_dir}/kmeans_obs_per_cluster.png")
+	plt.clf()
+
+
+def plot_centroid_distances(centroid_distances):
+	clusters = np.arange(len(centroid_distances)) + 1
+	plt.bar(clusters, centroid_distances, capsize=5, color='skyblue', edgecolor='black')
+	plt.xlabel('Cluster', fontsize=14)
+	plt.ylabel('Distancia entre centroides', fontsize=14)
+	plt.tight_layout()
+	plt.savefig(f"{settings.Config.out_dir}/kmeans_centroid_distances.png")
 	plt.clf()
