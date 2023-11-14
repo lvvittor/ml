@@ -5,7 +5,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 from settings import settings
-from kmeans import KMeans
+from kohonen import Kohonen
 
 # Load the data
 movies_df = pd.read_csv(settings.Config.data_dir+"/movie_data.csv", delimiter=";")
@@ -31,23 +31,25 @@ test_data[numerical_columns] = scaler.transform(test_data[numerical_columns])
 # Extract features for clustering (you may need to adjust this based on your dataset)
 features = train_data[numerical_columns]
 
-# Step 4: Apply k-means on the training set
-k = 3  # match the number of genres
+# Step 4: Apply kohonen on the training set
+k = 5
 
-kmeans = KMeans(k, features)
+kohonen = Kohonen(k, features.to_numpy())
 
-labels, _, _ = kmeans.train()
-train_data['Cluster'] = labels
+weights = kohonen.train(200_000)
+winner_neurons = kohonen.map_inputs(features.to_numpy())
+
+train_data['Cluster'] = winner_neurons
 
 # Step 5: Assign clusters to the test set
 test_features = test_data[numerical_columns]
 
-labels = kmeans.predict(test_features)
-test_data['Cluster'] = labels
+winner_neurons = kohonen.map_inputs(test_features.to_numpy())
+test_data['Cluster'] = winner_neurons
 
 # Step 6: Determine the predominant genre for each cluster based on the training set
 cluster_genre_mapping = {}
-for cluster in range(k):
+for cluster in range(k ** 2):
     cluster_samples = train_data[train_data['Cluster'] == cluster]
     predominant_genre = cluster_samples['genres'].mode().iloc[0]
     cluster_genre_mapping[cluster] = predominant_genre
@@ -74,5 +76,5 @@ print(confusion_matrix)
 # Plot the confusion matrix as a heatmap
 plt.figure(figsize=(10, 8))
 sns.heatmap(confusion_matrix, annot=True, fmt='d', cmap='Blues')
-plt.savefig(f"{settings.Config.out_dir}/kmeans_conf_matrix.png")
+plt.savefig(f"{settings.Config.out_dir}/kohonen_conf_matrix.png")
 plt.close()
