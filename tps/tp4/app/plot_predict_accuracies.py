@@ -7,7 +7,7 @@ kohonen_predict_accuracies = [48.4, 47.44, 50, 47.6, 45.99]
 
 kmeans_predict_accuracies = [38.3, 40.38, 40.54, 38.3, 40.22]
 
-hierarchical_predict_accuracies = [50, 49, 48, 47, 48.5] # FIXME: put real values
+hierarchical_predict_accuracies = [40.98, 40.98, 40.98, 40.98, 40.98] 
 
 kohonen_mean = np.mean(kohonen_predict_accuracies)
 kohonen_std = np.std(kohonen_predict_accuracies)
