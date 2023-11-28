@@ -32,5 +32,6 @@ poetry run python exs/$(ex)/app/main.py
 
 - Run notebooks:
 ```
-poetry run jupyter lab
+poetry run python -m ipykernel install --user --name=ml
+poetry run jupyter lab --NotebookApp.token=ml
 ```
