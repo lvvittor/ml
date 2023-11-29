@@ -157,3 +157,6 @@ data/seed_data.sql*
 
 **/**/**/out/*
 !**/**/**/out/.gitkeep
+
+tps/final/data/preprocessed_test.csv
+tps/final/data/preprocessed_train.csv
