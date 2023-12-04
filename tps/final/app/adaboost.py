@@ -76,6 +76,8 @@ class Adaboost:
             # calculate predictions and update weights
             predictions = clf.predict(X)
 
+            # increase the weights of the misclassified samples, and decrease the weights of the correctly classified ones
+            # `y * predictions` is -1 for misclassified samples, and 1 for correctly classified ones
             w *= np.exp(-clf.alpha * y * predictions)
             w /= np.sum(w) # normalize the weights so that they sum up to 1
 
